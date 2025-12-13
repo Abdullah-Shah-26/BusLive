@@ -11,7 +11,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Bus, Clock, AlertTriangle, School, MapPin } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface AlertSystemProps {
   busId: string;

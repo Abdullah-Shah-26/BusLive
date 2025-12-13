@@ -1,18 +1,39 @@
-'use client';
+"use client";
 
-import 'leaflet/dist/leaflet.css';
-import './MapComponent.css';
-import { Icon, Map as LeafletMap, map as createMap, tileLayer, marker, LatLng, latLngBounds, polyline, circle, divIcon } from 'leaflet';
-import React, { useEffect, useRef, useState } from 'react';
-import { useTheme } from 'next-themes';
-import { MapPin, Users, School, Navigation, Bus, Zap, Clock, Locate, Target } from 'lucide-react';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+import "leaflet/dist/leaflet.css";
+import "./MapComponent.css";
+import {
+  Icon,
+  Map as LeafletMap,
+  map as createMap,
+  tileLayer,
+  marker,
+  LatLng,
+  latLngBounds,
+  polyline,
+  circle,
+  divIcon,
+} from "leaflet";
+import React, { useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
+import {
+  MapPin,
+  Users,
+  School,
+  Navigation,
+  Bus,
+  Zap,
+  Clock,
+  Locate,
+  Target,
+} from "lucide-react";
+import { Card } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 
 declare global {
   interface Window {
-    L: typeof import('leaflet');
+    L: typeof import("leaflet");
   }
 }
 
@@ -34,80 +55,103 @@ interface MapComponentProps {
 }
 
 interface TrafficData {
-  level: 'low' | 'moderate' | 'heavy' | 'severe';
+  level: "low" | "moderate" | "heavy" | "severe";
   factor: number; // multiplier for base travel time
   color: string;
 }
 
-const calculateTrafficCondition = (currentHour: number, dayOfWeek: number, busSpeed: number): TrafficData => {
-  // Rush hour traffic (7-9 AM, 5-7 PM on weekdays)
-  const isRushHour = (currentHour >= 7 && currentHour <= 9) || (currentHour >= 17 && currentHour <= 19);
+const calculateTrafficCondition = (
+  currentHour: number,
+  dayOfWeek: number,
+  busSpeed: number
+): TrafficData => {
+  const isRushHour =
+    (currentHour >= 7 && currentHour <= 9) ||
+    (currentHour >= 17 && currentHour <= 19);
   const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
-  
 
   const avgSpeedKmh = busSpeed || 0;
-  
+
   if (avgSpeedKmh < 10 && isRushHour && isWeekday) {
-    return { level: 'severe', factor: 2.5, color: '#dc2626' }; // Red - Heavy congestion
+    return { level: "severe", factor: 2.5, color: "#dc2626" }; // Red - Heavy congestion
   } else if (avgSpeedKmh < 20 && (isRushHour || !isWeekday)) {
-    return { level: 'heavy', factor: 2.0, color: '#ea580c' }; // Orange-Red - Heavy traffic
+    return { level: "heavy", factor: 2.0, color: "#ea580c" }; // Orange-Red - Heavy traffic
   } else if (avgSpeedKmh < 35 || isRushHour) {
-    return { level: 'moderate', factor: 1.5, color: '#f59e0b' }; // Amber - Moderate traffic
+    return { level: "moderate", factor: 1.5, color: "#f59e0b" }; // Amber - Moderate traffic
   } else {
-    return { level: 'low', factor: 1.0, color: '#10b981' }; // Green - Light traffic
+    return { level: "low", factor: 1.0, color: "#10b981" }; // Green - Light traffic
   }
 };
 
 // Calculate distance between two coordinates (Haversine formula)
-const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+const calculateDistance = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number => {
   const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
 
-const calculateDynamicETA = (remainingRoute: LatLng[], currentSpeed: number, traffic: TrafficData): number => {
+const calculateDynamicETA = (
+  remainingRoute: LatLng[],
+  currentSpeed: number,
+  traffic: TrafficData
+): number => {
   if (remainingRoute.length < 2) return 0;
-  
+
   let totalDistance = 0;
   for (let i = 0; i < remainingRoute.length - 1; i++) {
     const dist = calculateDistance(
-      remainingRoute[i].lat, remainingRoute[i].lng,
-      remainingRoute[i + 1].lat, remainingRoute[i + 1].lng
+      remainingRoute[i].lat,
+      remainingRoute[i].lng,
+      remainingRoute[i + 1].lat,
+      remainingRoute[i + 1].lng
     );
     totalDistance += dist;
   }
-  
+
   // Estimated speed considering traffic
   const avgSpeed = Math.max(currentSpeed || 25, 15); // Minimum 15 km/h
   const adjustedSpeed = avgSpeed / traffic.factor;
-  
+
   // ETA in minutes
   return (totalDistance / adjustedSpeed) * 60;
 };
 
 const playNotificationSound = () => {
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance('Your bus is arriving in 5 minutes!');
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    const utterance = new SpeechSynthesisUtterance(
+      "Your bus is arriving in 5 minutes!"
+    );
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.volume = 0.8;
     speechSynthesis.speak(utterance);
   }
-  
+
   // Also try to play a system notification sound
-  if (typeof window !== 'undefined') {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSqCzvLZjjwKGGSz7N2WUTE');
-    audio.play().catch(() => console.log('Audio notification not supported'));
+  if (typeof window !== "undefined") {
+    const audio = new Audio(
+      "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSqCzvLZjjwKGGSz7N2WUTE"
+    );
+    audio.play().catch(() => console.log("Audio notification not supported"));
   }
 };
 
-const createModernBusIcon = (theme: string = 'light') => new (divIcon as any)({
-  html: `
+const createModernBusIcon = (theme: string = "light") =>
+  new (divIcon as any)({
+    html: `
     <div class="relative flex items-center justify-center w-12 h-12">
       <div class="w-10 h-10 bg-orange-500 rounded-lg shadow-lg flex items-center justify-center border border-orange-600">
         <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -116,13 +160,14 @@ const createModernBusIcon = (theme: string = 'light') => new (divIcon as any)({
       </div>
     </div>
   `,
-  className: 'custom-bus-marker',
-  iconSize: [48, 48],
-  iconAnchor: [24, 24],
-});
+    className: "custom-bus-marker",
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+  });
 
-const createModernUserIcon = () => new (divIcon as any)({
-  html: `
+const createModernUserIcon = () =>
+  new (divIcon as any)({
+    html: `
     <div class="relative flex items-center justify-center w-12 h-14">
       <div class="relative">
         <!-- Professional user location marker -->
@@ -140,13 +185,14 @@ const createModernUserIcon = () => new (divIcon as any)({
       </div>
     </div>
   `,
-  className: 'custom-user-marker',
-  iconSize: [48, 56],
-  iconAnchor: [24, 24],
-});
+    className: "custom-user-marker",
+    iconSize: [48, 56],
+    iconAnchor: [24, 24],
+  });
 
-const createModernCollegeIcon = () => new (divIcon as any)({
-  html: `
+const createModernCollegeIcon = () =>
+  new (divIcon as any)({
+    html: `
     <div class="relative flex items-center justify-center w-12 h-12">
       <div class="w-10 h-10 bg-purple-500 rounded-full shadow-lg flex items-center justify-center border border-purple-600">
         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -155,13 +201,14 @@ const createModernCollegeIcon = () => new (divIcon as any)({
       </div>
     </div>
   `,
-  className: 'custom-college-marker',
-  iconSize: [48, 48],
-  iconAnchor: [24, 24],
-});
+    className: "custom-college-marker",
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+  });
 
-const createCombinedUserBusIcon = () => new (divIcon as any)({
-  html: `
+const createCombinedUserBusIcon = () =>
+  new (divIcon as any)({
+    html: `
     <div class="relative flex items-center justify-center w-14 h-14">
       <div class="relative">
         <!-- Bus background -->
@@ -183,14 +230,22 @@ const createCombinedUserBusIcon = () => new (divIcon as any)({
       </div>
     </div>
   `,
-  className: 'custom-combined-marker',
-  iconSize: [56, 56],
-  iconAnchor: [28, 28],
-});
+    className: "custom-combined-marker",
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
+  });
 
-
-
-const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, routeCoordinates, remainingRoute, busSpeed = 0, eta, children }: MapComponentProps) => {
+const MapComponent = ({
+  userLocation,
+  busLocation,
+  collegeLocation,
+  onMapReady,
+  routeCoordinates,
+  remainingRoute,
+  busSpeed = 0,
+  eta,
+  children,
+}: MapComponentProps) => {
   const mapRef = useRef<LeafletMap | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const busMarkerRef = useRef<L.Marker | null>(null);
@@ -205,96 +260,108 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
   const [isTracking, setIsTracking] = useState(false);
   const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
   const [isUserOnBus, setIsUserOnBus] = useState(false);
-  const [currentTraffic, setCurrentTraffic] = useState<TrafficData>({ level: 'low', factor: 1.0, color: '#10b981' });
+  const [currentTraffic, setCurrentTraffic] = useState<TrafficData>({
+    level: "low",
+    factor: 1.0,
+    color: "#10b981",
+  });
 
-  const lightTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-  
+  const lightTileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const darkTileUrl =
+    "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-        const L = require('leaflet');
-        if (mapRef.current === null) {
-            const mapElement = document.getElementById('map');
-            if (mapElement && !(mapElement as any)._leaflet_id) {
-                const initialCenter = userLocation || { lat: 17.3850, lng: 78.4867 };
-                const leafletMap = createMap('map', { zoomControl: false, maxZoom: 22 }).setView([initialCenter.lat, initialCenter.lng], 13);
-                mapRef.current = leafletMap;
-                onMapReady(leafletMap);
-            }
+    if (typeof window !== "undefined") {
+      const L = require("leaflet");
+      if (mapRef.current === null) {
+        const mapElement = document.getElementById("map");
+        if (mapElement && !(mapElement as any)._leaflet_id) {
+          const initialCenter = userLocation || { lat: 17.385, lng: 78.4867 };
+          const leafletMap = createMap("map", {
+            zoomControl: false,
+            maxZoom: 22,
+          }).setView([initialCenter.lat, initialCenter.lng], 13);
+          mapRef.current = leafletMap;
+          onMapReady(leafletMap);
         }
+      }
     }
   }, [userLocation, onMapReady]);
 
-
   useEffect(() => {
     if (!mapRef.current) return;
-  
-    const tileUrl = theme === 'dark' ? darkTileUrl : lightTileUrl;
-    const attribution = theme === 'dark' 
-      ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-  
+
+    const tileUrl = theme === "dark" ? darkTileUrl : lightTileUrl;
+    const attribution =
+      theme === "dark"
+        ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
     if (tileLayerRef.current) {
       tileLayerRef.current.setUrl(tileUrl);
     } else {
-      tileLayerRef.current = tileLayer(tileUrl, { attribution, maxZoom: 22 }).addTo(mapRef.current);
+      tileLayerRef.current = tileLayer(tileUrl, {
+        attribution,
+        maxZoom: 22,
+      }).addTo(mapRef.current);
     }
-  
   }, [theme, mapRef.current]);
-
 
   const centerOnBus = () => {
     if (mapRef.current && busLocation) {
       mapRef.current.setView([busLocation.lat, busLocation.lng], 16, {
         animate: true,
-        duration: 1.5
+        duration: 1.5,
       });
       setIsTracking(true);
     }
   };
 
-
   const centerOnUser = () => {
     if (mapRef.current && userLocation) {
       mapRef.current.setView([userLocation.lat, userLocation.lng], 16, {
         animate: true,
-        duration: 1.5
+        duration: 1.5,
       });
       setIsTracking(false);
     }
   };
 
-
   useEffect(() => {
     if (mapRef.current && userLocation) {
       const modernUserIcon = createModernUserIcon();
-      
+
       if (!userMarkerRef.current) {
-        userMarkerRef.current = marker([userLocation.lat, userLocation.lng], { 
-          icon: modernUserIcon 
-        }).addTo(mapRef.current)
-        .bindPopup(`
+        userMarkerRef.current = marker([userLocation.lat, userLocation.lng], {
+          icon: modernUserIcon,
+        }).addTo(mapRef.current).bindPopup(`
           <div class="p-2 min-w-[200px]">
             <div class="flex items-center gap-2 mb-2">
               <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
-              <span class="font-medium text-sm">${isUserOnBus ? 'You are on the bus!' : 'Your Location'}</span>
+              <span class="font-medium text-sm">${
+                isUserOnBus ? "You are on the bus!" : "Your Location"
+              }</span>
             </div>
             <div class="text-xs text-gray-600">
               <div>Lat: ${userLocation.lat.toFixed(6)}</div>
               <div>Lng: ${userLocation.lng.toFixed(6)}</div>
-              ${isUserOnBus ? '<div class="mt-1 text-green-600 font-medium">🚌 Riding the bus</div>' : ''}
+              ${
+                isUserOnBus
+                  ? '<div class="mt-1 text-green-600 font-medium">🚌 Riding the bus</div>'
+                  : ""
+              }
             </div>
           </div>
         `);
-        
+
         // Add accuracy circle
         userCircleRef.current = circle([userLocation.lat, userLocation.lng], {
           radius: 50,
-          fillColor: 'hsl(var(--primary))',
+          fillColor: "hsl(var(--primary))",
           fillOpacity: 0.1,
-          color: 'hsl(var(--primary))',
+          color: "hsl(var(--primary))",
           weight: 2,
-          opacity: 0.5
+          opacity: 0.5,
         }).addTo(mapRef.current);
       } else {
         // Update position and icon
@@ -304,33 +371,38 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
           userCircleRef.current.setLatLng([userLocation.lat, userLocation.lng]);
         }
       }
-      
+
       // Hide user marker when on bus
       if (userMarkerRef.current) {
         userMarkerRef.current.setOpacity(isUserOnBus ? 0 : 1);
       }
       if (userCircleRef.current) {
-        userCircleRef.current.setStyle({ opacity: isUserOnBus ? 0 : 0.5, fillOpacity: isUserOnBus ? 0 : 0.1 });
+        userCircleRef.current.setStyle({
+          opacity: isUserOnBus ? 0 : 0.5,
+          fillOpacity: isUserOnBus ? 0 : 0.1,
+        });
       }
     }
   }, [userLocation, isUserOnBus]);
 
-
   useEffect(() => {
     if (mapRef.current && busLocation) {
-      const busIcon = isUserOnBus ? createCombinedUserBusIcon() : createModernBusIcon(theme || 'light');
-      
+      const busIcon = isUserOnBus
+        ? createCombinedUserBusIcon()
+        : createModernBusIcon(theme || "light");
+
       if (!busMarkerRef.current) {
-        busMarkerRef.current = marker([busLocation.lat, busLocation.lng], { 
-          icon: busIcon 
-        }).addTo(mapRef.current)
-        .bindPopup(`
+        busMarkerRef.current = marker([busLocation.lat, busLocation.lng], {
+          icon: busIcon,
+        }).addTo(mapRef.current).bindPopup(`
           <div class="p-3 min-w-[250px]">
             <div class="flex items-center gap-2 mb-3">
               <div class="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                 <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               </div>
-              <span class="font-medium">${isUserOnBus ? 'Bus + You On Board! 🎉' : 'Bus Live Location'}</span>
+              <span class="font-medium">${
+                isUserOnBus ? "Bus + You On Board! 🎉" : "Bus Live Location"
+              }</span>
             </div>
             <div class="grid grid-cols-2 gap-3 text-xs">
               <div>
@@ -339,16 +411,28 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
               </div>
               <div>
                 <span class="text-gray-500">Traffic</span>
-                <div class="font-medium" style="color: ${currentTraffic.color}">${currentTraffic.level}</div>
+                <div class="font-medium" style="color: ${
+                  currentTraffic.color
+                }">${currentTraffic.level}</div>
               </div>
-              ${eta ? `<div>
+              ${
+                eta
+                  ? `<div>
                 <span class="text-gray-500">ETA</span>
-                <div class="font-medium text-green-600">${Math.round(eta)} min</div>
-              </div>` : ''}
-              ${isUserOnBus ? `<div>
+                <div class="font-medium text-green-600">${Math.round(
+                  eta
+                )} min</div>
+              </div>`
+                  : ""
+              }
+              ${
+                isUserOnBus
+                  ? `<div>
                 <span class="text-gray-500">Status</span>
                 <div class="font-medium text-green-600">On Board ✅</div>
-              </div>` : ''}
+              </div>`
+                  : ""
+              }
             </div>
             <div class="mt-2 pt-2 border-t text-xs text-gray-600">
               <div>Lat: ${busLocation.lat.toFixed(6)}</div>
@@ -356,15 +440,15 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
             </div>
           </div>
         `);
-        
+
         // Add bus range circle
         busCircleRef.current = circle([busLocation.lat, busLocation.lng], {
           radius: 100,
-          fillColor: isUserOnBus ? '#22c55e' : '#3b82f6',
+          fillColor: isUserOnBus ? "#22c55e" : "#3b82f6",
           fillOpacity: 0.05,
-          color: isUserOnBus ? '#22c55e' : '#3b82f6',
+          color: isUserOnBus ? "#22c55e" : "#3b82f6",
           weight: 1,
-          opacity: 0.3
+          opacity: 0.3,
         }).addTo(mapRef.current);
       } else {
         busMarkerRef.current.setLatLng([busLocation.lat, busLocation.lng]);
@@ -372,32 +456,42 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
         if (busCircleRef.current) {
           busCircleRef.current.setLatLng([busLocation.lat, busLocation.lng]);
           busCircleRef.current.setStyle({
-            fillColor: isUserOnBus ? '#22c55e' : '#3b82f6',
-            color: isUserOnBus ? '#22c55e' : '#3b82f6'
+            fillColor: isUserOnBus ? "#22c55e" : "#3b82f6",
+            color: isUserOnBus ? "#22c55e" : "#3b82f6",
           });
         }
-        
+
         // Auto-track bus if tracking is enabled
         if (isTracking) {
           mapRef.current.setView([busLocation.lat, busLocation.lng], 16, {
             animate: true,
-            duration: 0.5
+            duration: 0.5,
           });
         }
       }
     }
-  }, [busLocation, mapRef.current, busSpeed, eta, theme, isTracking, isUserOnBus, currentTraffic]);
-
+  }, [
+    busLocation,
+    mapRef.current,
+    busSpeed,
+    eta,
+    theme,
+    isTracking,
+    isUserOnBus,
+    currentTraffic,
+  ]);
 
   useEffect(() => {
     if (mapRef.current && collegeLocation) {
       const modernCollegeIcon = createModernCollegeIcon();
-      
+
       if (!collegeMarkerRef.current) {
-        collegeMarkerRef.current = marker([collegeLocation.lat, collegeLocation.lng], { 
-          icon: modernCollegeIcon 
-        }).addTo(mapRef.current)
-        .bindPopup(`
+        collegeMarkerRef.current = marker(
+          [collegeLocation.lat, collegeLocation.lng],
+          {
+            icon: modernCollegeIcon,
+          }
+        ).addTo(mapRef.current).bindPopup(`
           <div class="p-3 min-w-[200px]">
             <div class="flex items-center gap-2 mb-2">
               <div class="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
@@ -420,42 +514,71 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
           </div>
         `);
       } else {
-        collegeMarkerRef.current.setLatLng([collegeLocation.lat, collegeLocation.lng]);
+        collegeMarkerRef.current.setLatLng([
+          collegeLocation.lat,
+          collegeLocation.lng,
+        ]);
       }
     }
   }, [collegeLocation]);
-  
 
   useEffect(() => {
     if (busLocation && userLocation && remainingRoute.length > 0) {
       const now = new Date();
-      const traffic = calculateTrafficCondition(now.getHours(), now.getDay(), busSpeed || 0);
+      const traffic = calculateTrafficCondition(
+        now.getHours(),
+        now.getDay(),
+        busSpeed || 0
+      );
       setCurrentTraffic(traffic);
-      
-      const dynamicETA = calculateDynamicETA(remainingRoute, busSpeed || 25, traffic);
-      const distanceToUser = calculateDistance(busLocation.lat, busLocation.lng, userLocation.lat, userLocation.lng);
-      
+
+      const dynamicETA = calculateDynamicETA(
+        remainingRoute,
+        busSpeed || 25,
+        traffic
+      );
+      const distanceToUser = calculateDistance(
+        busLocation.lat,
+        busLocation.lng,
+        userLocation.lat,
+        userLocation.lng
+      );
+
       // Check if user is on the bus (within 50 meters)
       const isOnBus = distanceToUser < 0.05; // 50 meters in km
       setIsUserOnBus(isOnBus);
-      
+
       // 5-minute arrival alert (only once every 5 minutes to avoid spam)
       const currentTime = Date.now();
-      if (dynamicETA <= 5 && dynamicETA > 3 && !isOnBus && currentTime - lastNotificationTime > 300000) {
+      if (
+        dynamicETA <= 5 &&
+        dynamicETA > 3 &&
+        !isOnBus &&
+        currentTime - lastNotificationTime > 300000
+      ) {
         playNotificationSound();
         setLastNotificationTime(currentTime);
-        
+
         // Browser notification if permitted
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification('🚌 Bus Arriving Soon!', {
+        if (
+          typeof window !== "undefined" &&
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          new Notification("🚌 Bus Arriving Soon!", {
             body: `Your bus is arriving in ${Math.round(dynamicETA)} minutes`,
-            icon: '/bus-icon.png'
+            icon: "/bus-icon.png",
           });
         }
       }
     }
-  }, [busLocation, userLocation, remainingRoute, busSpeed, lastNotificationTime]);
-  
+  }, [
+    busLocation,
+    userLocation,
+    remainingRoute,
+    busSpeed,
+    lastNotificationTime,
+  ]);
 
   useEffect(() => {
     if (mapRef.current) {
@@ -469,39 +592,47 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
       if (traveledRoutePolylineRef.current) {
         mapRef.current.removeLayer(traveledRoutePolylineRef.current);
       }
-      
-      if(routeCoordinates.length > 0) {
+
+      if (routeCoordinates.length > 0) {
         // Calculate traveled route
         const remainingLength = remainingRoute.length;
         const totalLength = routeCoordinates.length;
-        const traveledRoute = routeCoordinates.slice(0, totalLength - remainingLength + 1);
-        
+        const traveledRoute = routeCoordinates.slice(
+          0,
+          totalLength - remainingLength + 1
+        );
+
         // Add traveled route (completed path - success green)
         if (traveledRoute.length > 1) {
-          const traveled = polyline(traveledRoute, { 
-            color: '#22c55e', 
-            weight: 5, 
+          const traveled = polyline(traveledRoute, {
+            color: "#22c55e",
+            weight: 5,
             opacity: 0.6,
-            dashArray: '10, 5'
+            dashArray: "10, 5",
           });
           traveled.addTo(mapRef.current);
           traveledRoutePolylineRef.current = traveled;
         }
-        
+
         // Add remaining route with traffic-aware coloring
         if (remainingRoute.length > 1) {
-          const remaining = polyline(remainingRoute, { 
-            color: currentTraffic.color, 
-            weight: currentTraffic.level === 'severe' ? 8 : currentTraffic.level === 'heavy' ? 7 : 6, 
+          const remaining = polyline(remainingRoute, {
+            color: currentTraffic.color,
+            weight:
+              currentTraffic.level === "severe"
+                ? 8
+                : currentTraffic.level === "heavy"
+                ? 7
+                : 6,
             opacity: 0.9,
-            lineCap: 'round',
-            lineJoin: 'round',
-            dashArray: currentTraffic.level === 'severe' ? '15, 10' : undefined
+            lineCap: "round",
+            lineJoin: "round",
+            dashArray: currentTraffic.level === "severe" ? "15, 10" : undefined,
           });
           remaining.addTo(mapRef.current);
           remainingRoutePolylineRef.current = remaining;
         }
-        
+
         // Note: Removed auto-fit to give users manual control over map zoom
       }
     }
@@ -510,11 +641,10 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
   return (
     <div className="relative w-full h-full">
       <div className="w-full h-full" id="map" />
-      
 
       <div className="absolute bottom-6 right-6 z-[1000] flex flex-row gap-2">
         {children}
-        
+
         <Button
           onClick={centerOnBus}
           size="icon"
@@ -522,9 +652,9 @@ const MapComponent = ({ userLocation, busLocation, collegeLocation, onMapReady, 
           className="w-12 h-12 rounded-full shadow-lg backdrop-blur-sm bg-background/80 hover:bg-background/90 transition-all duration-200"
           disabled={!busLocation}
         >
-          <Target className={`w-5 h-5 ${isTracking ? 'animate-spin' : ''}`} />
+          <Target className={`w-5 h-5 ${isTracking ? "animate-spin" : ""}`} />
         </Button>
-        
+
         <Button
           onClick={centerOnUser}
           size="icon"

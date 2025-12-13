@@ -18,6 +18,8 @@ import {
   Star,
   MapPin,
   X,
+  Share2,
+  Check,
 } from "lucide-react";
 import {
   calculateETA,
@@ -83,7 +85,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
     null
   );
 
-
   const [alertState, setAlertState] = useState<AlertState>({
     fiveMinuteWarning: false,
     oneMinuteWarning: false,
@@ -93,6 +94,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
   const [showFiveMinuteAlert, setShowFiveMinuteAlert] = useState(false);
   const [showCollegeExitAlert, setShowCollegeExitAlert] = useState(false);
   const previousBusLocationRef = useRef<Location | null>(null);
+  const [shareClicked, setShareClicked] = useState(false);
 
   const routeIndexRef = useRef(0);
   const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -112,7 +114,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
       }),
     []
   );
-
 
   useEffect(() => {
     return () => {
@@ -170,8 +171,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
             routeIndexRef.current += 1;
             const newPos = coordinates[routeIndexRef.current];
-            
-            // Simulate minor speed fluctuation for "Avg Speed" (38-42 km/h)
+
             const currentSpeed = Math.floor(Math.random() * (42 - 35 + 1) + 38);
 
             return {
@@ -185,7 +185,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
     },
     [journeyStage]
   );
-
 
   const fetchAndSetRoute = useCallback(
     async (start: Location, end: Location) => {
@@ -211,31 +210,33 @@ export default function TrackerPage({ busId }: { busId: string }) {
     [startSimulation, toast]
   );
 
-
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const userLat = position.coords.latitude;
           const userLng = position.coords.longitude;
-          
+
           console.log("User Location Fetched:", userLat, userLng);
           console.log("College Location:", COLLEGE_LOCATION);
 
           const distToCollege = getDistance(
-            userLat, 
-            userLng, 
-            COLLEGE_LOCATION.lat, 
+            userLat,
+            userLng,
+            COLLEGE_LOCATION.lat,
             COLLEGE_LOCATION.lng
           );
-          
+
           console.log(" Distance to College (km):", distToCollege);
 
           if (distToCollege > 50) {
-            console.warn("User is too far from college. Switching to demo location.");
+            console.warn(
+              "User is too far from college. Switching to demo location."
+            );
             toast({
               title: "Outside Service Area",
-              description: "You are far from Hyderabad. Switching to demo mode.",
+              description:
+                "You are far from Hyderabad. Switching to demo mode.",
               duration: 5000,
             });
             setUserLocation(MOCK_USER_LOCATION);
@@ -266,7 +267,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
     setTrafficData(MOCK_TRAFFIC_DATA);
     setError(null);
   }, []);
-
 
   useEffect(() => {
     if (!userLocation || !map) return;
@@ -299,7 +299,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
     route.length,
   ]);
 
-
   useEffect(() => {
     if (arrivalStatus === "user") {
       toast({ title: `Bus ${busId} has arrived at your location!` });
@@ -320,14 +319,12 @@ export default function TrackerPage({ busId }: { busId: string }) {
     }
   }, [arrivalStatus, toast, busId]);
 
-
   useEffect(() => {
     if (route.length > 0 && busData && routeIndexRef.current < route.length) {
       const remaining = route.slice(routeIndexRef.current);
       setRemainingRoute(remaining);
     }
   }, [route, busData, routeIndexRef.current]);
-
 
   useEffect(() => {
     if (
@@ -369,7 +366,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
       ) {
         setShowFiveMinuteAlert(true);
         setAlertState((prev) => ({ ...prev, fiveMinuteWarning: true }));
-        
+
         if (journeyStage === "toUser") {
           toast({
             title: "Bus Approaching!",
@@ -416,7 +413,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
     alertState,
   ]);
 
-
   useEffect(() => {
     if (busData?.location) {
       if (
@@ -447,6 +443,43 @@ export default function TrackerPage({ busId }: { busId: string }) {
     setMap(mapInstance);
   }, []);
 
+  const handleShareLocation = async () => {
+    const shareUrl = `${window.location.origin}/?busId=${busId}`;
+    const shareText = `Track Bus ${busId} live on BusLive! 🚌`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Bus ${busId} - BusLive`,
+          text: shareText,
+          url: shareUrl,
+        });
+        toast({
+          title: "Shared Successfully!",
+          description: "Bus location shared with your friend.",
+        });
+      } catch (error: any) {
+        if (error.name !== "AbortError") {
+          copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setShareClicked(true);
+      toast({
+        title: "Link Copied!",
+        description:
+          "Share this link with your friends to track the bus together.",
+      });
+      setTimeout(() => setShareClicked(false), 2000);
+    });
+  };
+
   const handleRestartJourney = () => {
     toast({
       title: "New Journey Started",
@@ -474,10 +507,15 @@ export default function TrackerPage({ busId }: { busId: string }) {
   };
 
   const renderETA = () => {
-    if (busData?.status === "finished") return <span className="text-green-600 font-bold">Arrived at College</span>;
+    if (busData?.status === "finished")
+      return (
+        <span className="text-green-600 font-bold">Arrived at College</span>
+      );
     if (eta === null) return <span>Calculating...</span>;
-    if (busData?.speed === 0 && journeyStage === "toUser") return <span className="text-green-600 font-bold">Arrived at You</span>;
-    if (eta < 1 / 60) return <span className="text-green-600 font-bold">Arriving now</span>;
+    if (busData?.speed === 0 && journeyStage === "toUser")
+      return <span className="text-green-600 font-bold">Arrived at You</span>;
+    if (eta < 1 / 60)
+      return <span className="text-green-600 font-bold">Arriving now</span>;
 
     const totalSeconds = Math.floor(eta * 60);
     const hours = Math.floor(totalSeconds / 3600);
@@ -504,113 +542,127 @@ export default function TrackerPage({ busId }: { busId: string }) {
         busSpeed={busData?.speed}
         eta={eta || undefined}
       >
-        <Button
-          onClick={async () => {
-            if (!busData) {
-              toast({
-                variant: "destructive",
-                title: "No Bus Data",
-                description: "Waiting for bus location data...",
-              });
-              return;
-            }
+        <div className="flex gap-2">
+          <Button
+            onClick={handleShareLocation}
+            size="icon"
+            className="w-12 h-12 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white transition-all hover:scale-105 active:scale-95"
+            title="Share Bus Location"
+          >
+            {shareClicked ? (
+              <Check className="w-6 h-6" />
+            ) : (
+              <Share2 className="w-6 h-6" />
+            )}
+          </Button>
 
-            console.log("AI Traffic Analysis clicked!");
-            console.log("Bus Data:", busData);
-            setIsAnalyzing(true);
-
-            toast({
-              title: "🔍 Analyzing Traffic...",
-              description: "Asking Gemini AI for insights...",
-            });
-
-            try {
-              const { analyzeTraffic } = await import(
-                "@/ai/flows/traffic-flow"
-              );
-              console.log("Traffic flow imported successfully");
-
-              const result = await analyzeTraffic({
-                location: `${busData.location.lat}, ${busData.location.lng}`,
-                time: new Date().toLocaleTimeString(),
-                currentSpeed: busData.speed,
-              });
-
-              console.log("AI Analysis Result:", result);
-
-              // Update the main traffic state
-              setTrafficData({ level: result.trafficLevel as any });
-              setAiInsight(result);
-              
-              // Auto-dismiss after 10 seconds
-              setTimeout(() => {
-                setAiInsight(null);
-              }, 10000);
-
-              toast({
-                title: "AI Traffic Insight ",
-                description: (
-                  <div className="mt-2 space-y-2">
-                    <p className="font-medium">{result.analysis}</p>
-                    <p className="text-xs text-muted-foreground">
-                       {result.recommendation}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-bold uppercase">
-                        Level:
-                      </span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          result.trafficLevel === "severe"
-                            ? "bg-red-500 text-white"
-                            : result.trafficLevel === "heavy"
-                            ? "bg-orange-500 text-white"
-                            : result.trafficLevel === "moderate"
-                            ? "bg-yellow-500 text-black"
-                            : "bg-green-500 text-white"
-                        }`}
-                      >
-                        {result.trafficLevel}
-                      </span>
-                    </div>
-                  </div>
-                ),
-                duration: 8000,
-              });
-            } catch (e: any) {
-              console.error("AI Analysis Error:", e);
-
-              let errorMessage = "Could not fetch AI insights.";
-              if (e.message?.includes("API key")) {
-                errorMessage =
-                  "Gemini API key is missing. Please configure GEMINI_API_KEY in your .env file.";
-              } else if (e.message) {
-                errorMessage = e.message;
+          <Button
+            onClick={async () => {
+              if (!busData) {
+                toast({
+                  variant: "destructive",
+                  title: "No Bus Data",
+                  description: "Waiting for bus location data...",
+                });
+                return;
               }
 
-              toast({
-                variant: "destructive",
-                title: " Analysis Failed",
-                description: errorMessage,
-                duration: 5000,
-              });
-            } finally {
-              setIsAnalyzing(false);
-            }
-          }}
-          size="icon"
-          className="w-12 h-12 rounded-full shadow-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
-          title="Ask AI about Traffic"
-          disabled={isAnalyzing}
-        >
-          {isAnalyzing ? (
-            <Loader2 className="w-6 h-6 animate-spin" />
-          ) : (
-            <Zap className="w-6 h-6" />
-          )}
-        </Button>
-      </MapComponent>
+              console.log("AI Traffic Analysis clicked!");
+              console.log("Bus Data:", busData);
+              setIsAnalyzing(true);
 
+              toast({
+                title: "🔍 Analyzing Traffic...",
+                description: "Asking Gemini AI for insights...",
+              });
+
+              try {
+                const { analyzeTraffic } = await import(
+                  "@/ai/flows/traffic-flow"
+                );
+                console.log("Traffic flow imported successfully");
+
+                const result = await analyzeTraffic({
+                  location: `${busData.location.lat}, ${busData.location.lng}`,
+                  time: new Date().toLocaleTimeString(),
+                  currentSpeed: busData.speed,
+                });
+
+                console.log("AI Analysis Result:", result);
+
+                // Update the main traffic state
+                setTrafficData({ level: result.trafficLevel as any });
+                setAiInsight(result);
+
+                // Auto-dismiss after 10 seconds
+                setTimeout(() => {
+                  setAiInsight(null);
+                }, 10000);
+
+                toast({
+                  title: "AI Traffic Insight ",
+                  description: (
+                    <div className="mt-2 space-y-2">
+                      <p className="font-medium">{result.analysis}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {result.recommendation}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-bold uppercase">
+                          Level:
+                        </span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            result.trafficLevel === "severe"
+                              ? "bg-red-500 text-white"
+                              : result.trafficLevel === "heavy"
+                              ? "bg-orange-500 text-white"
+                              : result.trafficLevel === "moderate"
+                              ? "bg-yellow-500 text-black"
+                              : "bg-green-500 text-white"
+                          }`}
+                        >
+                          {result.trafficLevel}
+                        </span>
+                      </div>
+                    </div>
+                  ),
+                  duration: 8000,
+                });
+              } catch (e: any) {
+                console.error("AI Analysis Error:", e);
+
+                let errorMessage = "Could not fetch AI insights.";
+                if (e.message?.includes("API key")) {
+                  errorMessage =
+                    "Gemini API key is missing. Please configure GEMINI_API_KEY in your .env file.";
+                } else if (e.message) {
+                  errorMessage = e.message;
+                }
+
+                toast({
+                  variant: "destructive",
+                  title: " Analysis Failed",
+                  description: errorMessage,
+                  duration: 5000,
+                });
+              } finally {
+                setIsAnalyzing(false);
+              }
+            }}
+            size="icon"
+            className="w-12 h-12 rounded-full shadow-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            title="Ask AI about Traffic"
+            disabled={isAnalyzing}
+          >
+            {isAnalyzing ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <Zap className="w-6 h-6" />
+            )}
+          </Button>
+        </div>
+      </MapComponent>
 
       <div className="absolute top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 md:top-4 md:left-4 md:right-auto z-[1000] md:w-full md:max-w-sm">
         <Card className="bg-white/75 dark:bg-black/40 backdrop-blur-3xl border border-white/60 dark:border-white/20 shadow-2xl">
@@ -710,7 +762,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
         </Card>
       </div>
 
-
       {aiInsight && (
         <div className="absolute bottom-20 left-2 right-2 md:bottom-auto md:top-24 md:left-auto md:right-4 z-[1000] md:min-w-[450px] md:max-w-[500px] animate-in slide-in-from-bottom-5 md:slide-in-from-right-5 fade-in duration-300">
           <Card className="bg-white/75 dark:bg-black/40 backdrop-blur-3xl border border-white/60 dark:border-white/20 shadow-2xl overflow-hidden rounded-lg">
@@ -721,46 +772,62 @@ export default function TrackerPage({ busId }: { busId: string }) {
                 </div>
                 AI Traffic Analysis
               </CardTitle>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-6 w-6 -mr-1 text-muted-foreground hover:text-foreground hover:bg-white/10 rounded-md"
                 onClick={() => setAiInsight(null)}
               >
                 <span className="sr-only">Close</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </Button>
             </CardHeader>
             <CardContent className="p-2 pt-2 text-sm space-y-2">
               <p className="font-medium leading-snug text-foreground/90 text-xs px-1">
                 {aiInsight.analysis}
               </p>
-              
+
               <div className="flex flex-row gap-2 items-stretch">
-                 <div className="bg-zinc-100 dark:bg-zinc-900/80 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 shadow-sm flex-1">
-                  <p className="text-[9px] uppercase font-bold text-indigo-600 dark:text-indigo-300 mb-0.5 tracking-wider opacity-80">Recommendation</p>
+                <div className="bg-zinc-100 dark:bg-zinc-900/80 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 shadow-sm flex-1">
+                  <p className="text-[9px] uppercase font-bold text-indigo-600 dark:text-indigo-300 mb-0.5 tracking-wider opacity-80">
+                    Recommendation
+                  </p>
                   <p className="text-xs font-semibold text-foreground/90 leading-tight">
                     {aiInsight.recommendation}
                   </p>
                 </div>
-                
+
                 <div className="bg-zinc-100 dark:bg-zinc-900/80 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between min-w-[110px]">
-                   <div>
-                     <p className="text-[9px] uppercase font-bold text-purple-600 dark:text-purple-300 mb-0.5 tracking-wider opacity-80">Est. Delay</p>
-                     <p className="text-xs font-bold text-foreground/90">
+                  <div>
+                    <p className="text-[9px] uppercase font-bold text-purple-600 dark:text-purple-300 mb-0.5 tracking-wider opacity-80">
+                      Est. Delay
+                    </p>
+                    <p className="text-xs font-bold text-foreground/90">
                       {aiInsight.predictedDelay || "Calculating..."}
-                     </p>
-                   </div>
-                   <div className="p-1.5 bg-purple-500/10 rounded-full ml-2">
-                     <Clock className="w-3.5 h-3.5 text-purple-500" />
-                   </div>
+                    </p>
+                  </div>
+                  <div className="p-1.5 bg-purple-500/10 rounded-full ml-2">
+                    <Clock className="w-3.5 h-3.5 text-purple-500" />
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
-
 
       <div className="absolute top-2 right-2 sm:top-4 sm:right-4 md:top-4 md:right-4 z-[1000] flex gap-2 md:gap-3 items-start">
         <div className="md:hidden flex gap-0.5 sm:gap-1 items-center backdrop-blur-3xl rounded-md sm:rounded-lg shadow-2xl p-1 sm:p-1.5 border border-white/30 dark:border-white/20 [background:rgba(255,255,255,0.05)] dark:[background:rgba(0,0,0,0.2)]">
@@ -991,16 +1058,22 @@ export default function TrackerPage({ busId }: { busId: string }) {
                     key={idx}
                     className="flex items-center justify-between p-2 sm:p-3 bg-muted/30 dark:bg-zinc-900 dark:border dark:border-white/10 rounded-lg sm:rounded-xl"
                   >
-                    <span className="text-xs sm:text-sm font-medium">{item.label}</span>
+                    <span className="text-xs sm:text-sm font-medium">
+                      {item.label}
+                    </span>
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <div
                         className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                          item.connected ? "bg-green-500" : "bg-yellow-500 animate-pulse"
+                          item.connected
+                            ? "bg-green-500"
+                            : "bg-yellow-500 animate-pulse"
                         }`}
                       />
                       <span
                         className={`text-[10px] sm:text-xs font-medium ${
-                          item.connected ? "text-green-600" : "text-muted-foreground"
+                          item.connected
+                            ? "text-green-600"
+                            : "text-muted-foreground"
                         }`}
                       >
                         {item.connected ? "Connected" : "Connecting..."}
@@ -1027,8 +1100,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
           journeyStage={journeyStage}
         />
       )}
-
-
     </div>
   );
 }

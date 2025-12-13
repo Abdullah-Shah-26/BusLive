@@ -5,7 +5,6 @@ import "./globals.css";
 import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-
 export const metadata: Metadata = {
   title: "BusLive - Smart Bus Tracker",
   description: "Real-time smart bus tracking system with AI-powered features",

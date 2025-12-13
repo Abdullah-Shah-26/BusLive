@@ -1,23 +1,51 @@
 # BusLive
 
-Real-time bus tracking system with live location updates and route visualization.
+Real-time bus tracking system for college transportation with AI-powered traffic insights.
 
-## Stack
+## Problem Statement
 
-- **Next.js 16** + React 19 + TypeScript
-- **Firebase** - Authentication & real-time database
-- **OpenRouteService** - Route calculation
-- **Leaflet** - Interactive maps
-- **Tailwind + shadcn/ui** - UI components
-- **Genkit** - Server-side flow orchestration
+Public transport in India lacks real-time visibility, causing unpredictable wait times and poor passenger experience. BusLive solves this with live GPS tracking, AI-powered traffic analysis, and smart notifications.
 
-## Setup
+## Features
+
+- **Real-Time Tracking** - Live bus location updates on interactive maps
+- **Smart Search** - Find buses by number, route, or destination
+- **Favorite Routes** - Save frequently used routes with localStorage
+- **Capacity Indicators** - Color-coded occupancy visualization
+- **Share Location** - Share live tracking via Web Share API
+- **AI Traffic Analysis** - Gemini AI-powered insights and delay predictions
+- **Smart ETA** - Dynamic arrival time predictions
+- **Route Visualization** - Complete journey path display
+- **Smart Alerts** - Notifications when bus is approaching
+- **Loading States** - Skeleton loaders for smooth UX
+- **Authentication** - Google Sign-In and Email/Password
+- **Dark Mode** - Theme switching with persistence
+- **Responsive Design** - Works on mobile and desktop
+
+## Tech Stack
+
+**Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui  
+**Backend:** Firebase (Auth + Realtime Database)  
+**APIs:** OpenRouteService (routing), Google Gemini AI (traffic analysis)  
+**Maps:** Leaflet.js, React Leaflet  
+**Optimization:** In-memory route caching (5-minute TTL)
+
+## Quick Start
 
 ```bash
+# Install dependencies
 npm install
+
+# Configure environment variables
+cp .env.example .env
+
+# Run development server
+npm run dev
 ```
 
-Create `.env`:
+Visit `http://localhost:3000`
+
+### Environment Variables
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=
@@ -28,34 +56,38 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 NEXT_PUBLIC_OPENROUTESERVICE_API_KEY=
+GOOGLE_GENAI_API_KEY=
 ```
 
-## Run
+## Project Structure
 
-```bash
-npm run dev          # Dev server (port 9002)
-npm run build        # Production build
-npm run start        # Production server
+```
+src/
+├── app/
+│   ├── page.tsx              # Main entry
+│   ├── login/                # Authentication
+│   └── bus-selection/        # Route selection
+├── components/
+│   ├── TrackerPage.tsx       # Live tracking
+│   ├── MapComponent.tsx      # Leaflet map
+│   └── ui/                   # shadcn components
+├── context/
+│   └── AuthContext.tsx       # Auth state
+├── lib/
+│   ├── firebase.ts           # Firebase config
+│   └── utils.ts              # Helpers
+└── ai/
+    ├── flows/                # Genkit AI flows
+    └── schemas/              # Zod schemas
 ```
 
-## Features
+## Inspiration
 
-- **Live Tracking** - Real-time bus location updates
-- **Route Visualization** - Interactive map with route overlay
-- **ETA Calculation** - Dynamic arrival time estimates
-- **User Authentication** - Google & email login via Firebase
-- **Responsive UI** - Glassmorphic design with dark mode
-- **Bus Selection** - Choose from available buses
-- **Journey Stages** - Track bus from pickup to destination
+This project was inspired by Smart India Hackathon 2025 Problem Statement #1656, addressing real-world challenges in public transport tracking and management.
 
-## Architecture
+## Credits
 
-- **Client**: Next.js App Router with React Server Components
-- **Maps**: Leaflet with custom markers and route rendering
-- **Routing**: OpenRouteService API via server-side proxy
-- **State**: React hooks for real-time updates
-- **Auth**: Firebase Authentication
-- **Styling**: Tailwind CSS with custom glass effects
+Built with inspiration from the open-source community. Special thanks to SaiGanesh & team for the initial concept.
 
 ## License
 

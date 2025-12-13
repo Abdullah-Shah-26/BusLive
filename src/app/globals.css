@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: 'PT Sans', sans-serif;
+  font-family: "PT Sans", sans-serif;
 }
 
 @layer base {
@@ -93,12 +93,12 @@ body {
     animation: fadeInUp 0.6s ease-out;
     animation-fill-mode: both;
   }
-  
+
   .slide-in-from-bottom-4 {
     animation: slideInFromBottom 0.6s ease-out;
     animation-fill-mode: both;
   }
-  
+
   .fade-in {
     animation: fadeIn 0.6s ease-out;
     animation-fill-mode: both;
@@ -136,12 +136,10 @@ body {
   }
 }
 
-/* Enhanced scroll behavior */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -159,13 +157,11 @@ html {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Enhanced focus styles */
 .focus-visible:focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
 
-/* Glass morphism effect */
 .glass {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -177,84 +173,68 @@ html {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Mobile PWA optimizations */
 @media (display-mode: standalone) {
-  /* PWA-specific styles when app is installed */
   body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
-  
-  /* Hide browser UI elements when in standalone mode */
+
   .hide-in-standalone {
     display: none !important;
   }
 }
 
-/* Mobile-specific improvements */
 @media (max-width: 768px) {
-  /* Improve touch targets */
-  button, 
+  button,
   [role="button"],
   .clickable {
     min-height: 44px;
     min-width: 44px;
   }
-  
-  /* Better mobile map interaction */
+
   .leaflet-container {
     touch-action: pan-x pan-y;
   }
-  
-  /* Optimize font sizes for mobile */
+
   .mobile-text {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
   }
-  
-  /* Mobile-friendly alerts */
+
   [data-radix-alert-dialog-content] {
     max-width: 95vw;
     max-height: 85vh;
   }
 }
 
-/* Landscape mobile optimizations */
 @media (max-width: 768px) and (orientation: landscape) {
-  /* Adjust for landscape mobile views */
   .mobile-landscape-adjust {
     height: 100vh;
     overflow: hidden;
   }
 }
 
-/* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), 
-       (min-resolution: 192dpi) {
-  /* Crisp icons and graphics on retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .crisp-edges {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
   }
 }
 
-/* Improved accessibility for mobile */
 @media (prefers-reduced-motion: reduce) {
   .animate-in,
   .slide-in-from-bottom-4,
   .fade-in {
     animation: none;
   }
-  
+
   html {
     scroll-behavior: auto;
   }
 }
 
-/* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
-  /* Fix for iOS Safari viewport issues */
   .ios-fix {
     min-height: -webkit-fill-available;
   }

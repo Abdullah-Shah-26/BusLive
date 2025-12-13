@@ -40,9 +40,7 @@ const analyzeTrafficFlow = ai.defineFlow(
       prompt: prompt,
       output: { format: 'json', schema: TrafficAnalysisOutputSchema }
     });
-
-
-    
+ 
     const result = await ai.generate({
         prompt,
         output: { format: 'json', schema: TrafficAnalysisOutputSchema }
