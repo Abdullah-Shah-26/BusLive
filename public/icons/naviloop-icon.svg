@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#2563EB" stroke="#1E40AF" stroke-width="8"/>
+  
+  <!-- Bus icon -->
+  <rect x="156" y="180" width="200" height="120" rx="16" fill="#FFFFFF"/>
+  <rect x="156" y="180" width="200" height="40" rx="16" fill="#F3F4F6"/>
+  
+  <!-- Bus windows -->
+  <rect x="176" y="240" width="32" height="32" rx="4" fill="#2563EB"/>
+  <rect x="220" y="240" width="32" height="32" rx="4" fill="#2563EB"/>
+  <rect x="264" y="240" width="32" height="32" rx="4" fill="#2563EB"/>
+  <rect x="308" y="240" width="32" height="32" rx="4" fill="#2563EB"/>
+  
+  <!-- Bus wheels -->
+  <circle cx="196" cy="320" r="20" fill="#374151"/>
+  <circle cx="196" cy="320" r="12" fill="#6B7280"/>
+  <circle cx="316" cy="320" r="20" fill="#374151"/>
+  <circle cx="316" cy="320" r="12" fill="#6B7280"/>
+  
+  <!-- GPS/Location indicator -->
+  <circle cx="256" cy="140" r="24" fill="#EF4444"/>
+  <circle cx="256" cy="140" r="8" fill="#FFFFFF"/>
+  
+  <!-- Route lines -->
+  <path d="M100 360 Q180 300 256 340 Q332 380 412 320" stroke="#10B981" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M100 340 Q200 280 256 320 Q320 360 412 300" stroke="#10B981" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.7"/>
+  
+  <!-- Navigation arrow -->
+  <path d="M256 380 L246 400 L266 400 Z" fill="#FFFFFF"/>
+</svg>
