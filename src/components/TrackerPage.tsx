@@ -366,22 +366,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
       ) {
         setShowFiveMinuteAlert(true);
         setAlertState((prev) => ({ ...prev, fiveMinuteWarning: true }));
-
-        if (journeyStage === "toUser") {
-          toast({
-            title: "Bus Approaching!",
-            description: `Bus ${busId} is about ${Math.round(
-              calculatedEta
-            )} minutes away from your location. Check the popup for details!`,
-          });
-        } else {
-          toast({
-            title: "Reaching Destination",
-            description: `Bus ${busId} is about ${Math.round(
-              calculatedEta
-            )} minutes away from the college. Check the popup for details!`,
-          });
-        }
       }
 
       if (
@@ -424,10 +408,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
       ) {
         setShowCollegeExitAlert(true);
         setAlertState((prev) => ({ ...prev, collegeExitWarning: true }));
-        toast({
-          title: "Bus Departed from College",
-          description: `Bus ${busId} has left the college and is now on route!`,
-        });
       }
 
       previousBusLocationRef.current = busData.location;
