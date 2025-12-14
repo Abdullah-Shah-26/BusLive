@@ -600,8 +600,14 @@ export default function TrackerPage({ busId }: { busId: string }) {
                 return;
               }
 
-              console.log("AI Traffic Analysis clicked!");
-              console.log("Bus Data:", busData);
+              if (busData.status === "finished") {
+                toast({
+                  title: "Journey Complete",
+                  description: "Bus has arrived at the destination.",
+                });
+                return;
+              }
+
               setIsAnalyzing(true);
 
               try {
@@ -665,7 +671,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
             size="icon"
             className="w-12 h-12 rounded-full shadow-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             title="Ask AI about Traffic"
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || busData?.status === "finished"}
           >
             {isAnalyzing ? (
               <Loader2 className="w-6 h-6 animate-spin" />
