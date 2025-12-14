@@ -25,7 +25,6 @@ import {
   calculateETA,
   AlertState,
   hasExitedCollegeBoundary,
-  shouldShowFiveMinuteAlert,
   getDistance,
 } from "@/lib/utils";
 import { Skeleton } from "./ui/skeleton";
@@ -34,7 +33,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { getRoute } from "@/ai/flows/routing-flow";
 import { ThemeToggle } from "./ThemeToggle";
-import AlertSystem from "./AlertSystem";
 import type { LatLng, Map as LeafletMap } from "leaflet";
 import { Separator } from "./ui/separator";
 
@@ -77,7 +75,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
   const [route, setRoute] = useState<LatLng[]>([]);
   const [remainingRoute, setRemainingRoute] = useState<LatLng[]>([]);
   const [map, setMap] = useState<LeafletMap | null>(null);
-  const [showArrivalAlert, setShowArrivalAlert] = useState(false);
   const [journeyStage, setJourneyStage] = useState<"toUser" | "toCollege">(
     "toUser"
   );
@@ -91,8 +88,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
     arrivalWarning: false,
     collegeExitWarning: false,
   });
-  const [showFiveMinuteAlert, setShowFiveMinuteAlert] = useState(false);
-  const [showCollegeExitAlert, setShowCollegeExitAlert] = useState(false);
   const previousBusLocationRef = useRef<Location | null>(null);
   const [shareClicked, setShareClicked] = useState(false);
 
@@ -139,10 +134,10 @@ export default function TrackerPage({ busId }: { busId: string }) {
           speed: 40,
         });
 
-        setShowArrivalAlert(false);
-
         if (simulationIntervalRef.current)
           clearInterval(simulationIntervalRef.current);
+
+        const currentJourneyStage = journeyStage;
 
         simulationIntervalRef.current = setInterval(() => {
           setBusData((prevBusData) => {
@@ -152,11 +147,14 @@ export default function TrackerPage({ busId }: { busId: string }) {
               return prevBusData;
             }
 
-            if (routeIndexRef.current >= coordinates.length - 1) {
+            routeIndexRef.current += 1;
+            if (routeIndexRef.current >= coordinates.length) {
               if (simulationIntervalRef.current)
                 clearInterval(simulationIntervalRef.current);
 
-              if (journeyStage === "toUser") {
+              const finalPos = coordinates[coordinates.length - 1];
+
+              if (currentJourneyStage === "toUser") {
                 setArrivalStatus("user");
               } else {
                 setArrivalStatus("college");
@@ -164,14 +162,14 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
               return {
                 ...prevBusData,
+                location: { lat: finalPos.lat, lng: finalPos.lng },
                 speed: 0,
-                status: journeyStage === "toCollege" ? "finished" : "enroute",
+                status:
+                  currentJourneyStage === "toCollege" ? "finished" : "enroute",
               };
             }
 
-            routeIndexRef.current += 1;
             const newPos = coordinates[routeIndexRef.current];
-
             const currentSpeed = Math.floor(Math.random() * (42 - 35 + 1) + 38);
 
             return {
@@ -180,7 +178,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
               speed: currentSpeed,
             };
           });
-        }, 2000);
+        }, 3000);
       }
     },
     [journeyStage]
@@ -273,9 +271,9 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
     if (journeyStage === "toUser" && route.length === 0) {
       const randomLatOffset =
-        (Math.random() * 0.02 + 0.02) * (Math.random() > 0.5 ? 1 : -1);
+        (Math.random() * 0.03 + 0.05) * (Math.random() > 0.5 ? 1 : -1);
       const randomLngOffset =
-        (Math.random() * 0.02 + 0.02) * (Math.random() > 0.5 ? 1 : -1);
+        (Math.random() * 0.03 + 0.05) * (Math.random() > 0.5 ? 1 : -1);
 
       const busStartLocation: Location = {
         lat: userLocation.lat + randomLatOffset,
@@ -299,23 +297,75 @@ export default function TrackerPage({ busId }: { busId: string }) {
     route.length,
   ]);
 
+  const playNotificationSound = useCallback((message: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+
+      setTimeout(() => {
+        const voices = window.speechSynthesis.getVoices();
+
+        const femaleVoice = voices.find(
+          (v) =>
+            (v.name.includes("Samantha") ||
+              v.name.includes("Google UK English Female") ||
+              v.name.includes("Microsoft Zira") ||
+              v.name.includes("Karen") ||
+              v.name.includes("Victoria") ||
+              v.name.includes("Fiona") ||
+              (v.name.toLowerCase().includes("female") &&
+                v.lang.startsWith("en"))) &&
+            !v.name.toLowerCase().includes("male")
+        );
+
+        if (!femaleVoice) {
+          console.warn(
+            "No female voice available - notification audio skipped"
+          );
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.voice = femaleVoice;
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.8;
+
+        window.speechSynthesis.speak(utterance);
+      }, 100);
+    }
+  }, []);
+
   useEffect(() => {
     if (arrivalStatus === "user") {
-      setShowArrivalAlert(true);
+      toast({
+        title: "🚌 Bus Arrived at Your Location!",
+        description: `Bus ${busId} is here! Get ready to board.`,
+      });
       setArrivalStatus(null);
 
       setTimeout(() => {
-        setJourneyStage("toCollege");
+        if (simulationIntervalRef.current) {
+          clearInterval(simulationIntervalRef.current);
+          simulationIntervalRef.current = null;
+        }
+        routeIndexRef.current = 0;
         setRoute([]);
         setAlertState((prev) => ({ ...prev, fiveMinuteWarning: false }));
-        setShowArrivalAlert(false);
-      }, 5000);
+        setJourneyStage("toCollege");
+      }, 3000);
     } else if (arrivalStatus === "college") {
-      setShowArrivalAlert(true);
+      playNotificationSound(
+        `Bus ${busId} has arrived at the college. Journey complete!`
+      );
+
+      toast({
+        title: "🎉 Arrived at College!",
+        description: `Bus ${busId} has reached the college. Journey complete!`,
+      });
       setBusData((prev) => (prev ? { ...prev, status: "finished" } : null));
       setArrivalStatus(null);
     }
-  }, [arrivalStatus, busId]);
+  }, [arrivalStatus, busId, toast, playNotificationSound]);
 
   useEffect(() => {
     if (route.length > 0 && busData && routeIndexRef.current < route.length) {
@@ -359,28 +409,32 @@ export default function TrackerPage({ busId }: { busId: string }) {
       if (
         calculatedEta !== null &&
         calculatedEta <= 5 &&
-        calculatedEta > 3 &&
+        calculatedEta > 1 &&
         !alertState.fiveMinuteWarning
       ) {
-        setShowFiveMinuteAlert(true);
         setAlertState((prev) => ({ ...prev, fiveMinuteWarning: true }));
-      }
 
-      if (
-        calculatedEta !== null &&
-        calculatedEta <= 1 &&
-        !alertState.oneMinuteWarning
-      ) {
-        setAlertState((prev) => ({ ...prev, oneMinuteWarning: true }));
+        if (journeyStage === "toUser") {
+          playNotificationSound(
+            `Your bus is about ${Math.round(
+              calculatedEta
+            )} minutes away. Please get ready.`
+          );
+        }
+
         toast({
           title:
             journeyStage === "toUser"
-              ? "Bus is Arriving Soon!"
-              : "Approaching College!",
+              ? "🚌 Bus Approaching Your Location!"
+              : "📍 Almost at College!",
           description:
             journeyStage === "toUser"
-              ? `Bus ${busId} is less than a minute away from your location.`
-              : `Bus ${busId} is less than a minute away from the college.`,
+              ? `Bus ${busId} will arrive at your pickup location in about ${Math.round(
+                  calculatedEta
+                )} minutes. Get ready!`
+              : `Bus ${busId} will arrive at the college in about ${Math.round(
+                  calculatedEta
+                )} minutes.`,
         });
       }
     }
@@ -393,6 +447,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
     route,
     journeyStage,
     alertState,
+    playNotificationSound,
   ]);
 
   useEffect(() => {
@@ -404,8 +459,11 @@ export default function TrackerPage({ busId }: { busId: string }) {
         ) &&
         !alertState.collegeExitWarning
       ) {
-        setShowCollegeExitAlert(true);
         setAlertState((prev) => ({ ...prev, collegeExitWarning: true }));
+        toast({
+          title: "🚌 Bus Departed!",
+          description: `Bus ${busId} has left the college and is on the way.`,
+        });
       }
 
       previousBusLocationRef.current = busData.location;
@@ -468,7 +526,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
       college: false,
       fiveMin: false,
     };
-    setShowArrivalAlert(false);
     setJourneyStage("toUser");
     setRoute([]);
     setBusData(null);
@@ -479,8 +536,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
       arrivalWarning: false,
       collegeExitWarning: false,
     });
-    setShowFiveMinuteAlert(false);
-    setShowCollegeExitAlert(false);
     previousBusLocationRef.current = null;
   };
 
@@ -549,12 +604,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
               console.log("Bus Data:", busData);
               setIsAnalyzing(true);
 
-              toast({
-                title: "🔍 Analyzing Traffic...",
-                description:
-                  "Asking AI for insights (Gemini → Groq fallback)...",
-              });
-
               try {
                 const { analyzeTraffic } = await import(
                   "@/ai/flows/traffic-flow"
@@ -569,45 +618,12 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
                 console.log("AI Analysis Result:", result);
 
-                // Update the main traffic state
                 setTrafficData({ level: result.trafficLevel as any });
                 setAiInsight(result);
 
-                // Auto-dismiss after 10 seconds
                 setTimeout(() => {
                   setAiInsight(null);
                 }, 10000);
-
-                toast({
-                  title: "AI Traffic Insight ",
-                  description: (
-                    <div className="mt-2 space-y-2">
-                      <p className="font-medium">{result.analysis}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {result.recommendation}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-bold uppercase">
-                          Level:
-                        </span>
-                        <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                            result.trafficLevel === "severe"
-                              ? "bg-red-500 text-white"
-                              : result.trafficLevel === "heavy"
-                              ? "bg-orange-500 text-white"
-                              : result.trafficLevel === "moderate"
-                              ? "bg-yellow-500 text-black"
-                              : "bg-green-500 text-white"
-                          }`}
-                        >
-                          {result.trafficLevel}
-                        </span>
-                      </div>
-                    </div>
-                  ),
-                  duration: 8000,
-                });
               } catch (e: any) {
                 console.error("AI Analysis Error:", e);
 
@@ -681,7 +697,9 @@ export default function TrackerPage({ busId }: { busId: string }) {
                   />
                 </div>
                 <p className="text-[10px] sm:text-xs md:text-sm font-normal text-muted-foreground mt-0.5 md:mt-1 truncate">
-                  {journeyStage === "toUser"
+                  {busData?.status === "finished"
+                    ? "Arrived at college"
+                    : journeyStage === "toUser"
                     ? "Coming to you"
                     : "Heading to college"}
                 </p>
@@ -758,68 +776,49 @@ export default function TrackerPage({ busId }: { busId: string }) {
       </div>
 
       {aiInsight && (
-        <div className="absolute bottom-20 left-2 right-2 md:bottom-auto md:top-24 md:left-auto md:right-4 z-[1000] md:min-w-[450px] md:max-w-[500px] animate-in slide-in-from-bottom-5 md:slide-in-from-right-5 fade-in duration-300">
-          <Card className="bg-white/75 dark:bg-black/40 backdrop-blur-3xl border border-white/60 dark:border-white/20 shadow-2xl overflow-hidden rounded-lg">
-            <CardHeader className="p-2 flex flex-row items-center justify-between space-y-0 border-b border-white/10 dark:border-white/5">
-              <CardTitle className="text-xs font-bold flex items-center gap-2">
-                <div className="p-1 bg-indigo-500/20 rounded-md backdrop-blur-md">
-                  <Zap className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
+        <div className="absolute bottom-24 left-2 right-2 sm:bottom-20 md:bottom-auto md:top-24 md:left-auto md:right-4 z-[1000] md:min-w-[450px] md:max-w-[500px] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <Card className="bg-white/85 dark:bg-zinc-900/85 backdrop-blur-md border border-white/50 dark:border-zinc-700/50 shadow-xl overflow-hidden rounded-xl">
+            <div className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-indigo-500/20 rounded-lg">
+                    <Zap className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    AI Traffic Analysis
+                  </span>
                 </div>
-                AI Traffic Analysis
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 -mr-1 text-muted-foreground hover:text-foreground hover:bg-white/10 rounded-md"
-                onClick={() => setAiInsight(null)}
-              >
-                <span className="sr-only">Close</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <button
+                  className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                  onClick={() => setAiInsight(null)}
                 >
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </Button>
-            </CardHeader>
-            <CardContent className="p-2 pt-2 text-sm space-y-2">
-              <p className="font-medium leading-snug text-foreground/90 text-xs px-1">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed mb-3">
                 {aiInsight.analysis}
               </p>
 
-              <div className="flex flex-row gap-2 items-stretch">
-                <div className="bg-zinc-100 dark:bg-zinc-900/80 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 shadow-sm flex-1">
-                  <p className="text-[9px] uppercase font-bold text-indigo-600 dark:text-indigo-300 mb-0.5 tracking-wider opacity-80">
+              <div className="flex gap-2">
+                <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg">
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
                     Recommendation
                   </p>
-                  <p className="text-xs font-semibold text-foreground/90 leading-tight">
+                  <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                     {aiInsight.recommendation}
                   </p>
                 </div>
-
-                <div className="bg-zinc-100 dark:bg-zinc-900/80 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between min-w-[110px]">
-                  <div>
-                    <p className="text-[9px] uppercase font-bold text-purple-600 dark:text-purple-300 mb-0.5 tracking-wider opacity-80">
-                      Est. Delay
-                    </p>
-                    <p className="text-xs font-bold text-foreground/90">
-                      {aiInsight.predictedDelay || "Calculating..."}
-                    </p>
-                  </div>
-                  <div className="p-1.5 bg-purple-500/10 rounded-full ml-2">
-                    <Clock className="w-3.5 h-3.5 text-purple-500" />
-                  </div>
+                <div className="bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg min-w-[90px]">
+                  <p className="text-xs text-purple-600 dark:text-purple-400 font-semibold mb-1">
+                    Est. Delay
+                  </p>
+                  <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                    {aiInsight.predictedDelay || "None"}
+                  </p>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
       )}
@@ -852,7 +851,10 @@ export default function TrackerPage({ busId }: { busId: string }) {
             size="sm"
             onClick={(e) => {
               e.preventDefault();
-              setShowFiveMinuteAlert(true);
+              toast({
+                title: "🚌 Bus Approaching!",
+                description: `Bus ${busId} is about 5 minutes away.`,
+              });
             }}
             className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 rounded-sm h-6 w-6 p-0"
             title="Test 5min Alert"
@@ -866,7 +868,10 @@ export default function TrackerPage({ busId }: { busId: string }) {
             size="sm"
             onClick={(e) => {
               e.preventDefault();
-              setShowCollegeExitAlert(true);
+              toast({
+                title: "🚌 Bus Departed!",
+                description: `Bus ${busId} has left the college.`,
+              });
             }}
             className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-sm h-6 w-6 p-0"
             title="Test College Exit"
@@ -924,8 +929,10 @@ export default function TrackerPage({ busId }: { busId: string }) {
               size="sm"
               onClick={(e) => {
                 e.preventDefault();
-                console.log("🧪 Test 5-minute alert clicked!");
-                setShowFiveMinuteAlert(true);
+                toast({
+                  title: "🚌 Bus Approaching!",
+                  description: `Bus ${busId} is about 5 minutes away.`,
+                });
               }}
               className="rounded-md h-9 w-9 p-0 hover:bg-orange-500 hover:text-white transition-all duration-300 text-orange-500"
               title="Test 5min Alert"
@@ -938,8 +945,10 @@ export default function TrackerPage({ busId }: { busId: string }) {
               size="sm"
               onClick={(e) => {
                 e.preventDefault();
-                console.log("🧪 Test college exit alert clicked!");
-                setShowCollegeExitAlert(true);
+                toast({
+                  title: "🚌 Bus Departed!",
+                  description: `Bus ${busId} has left the college.`,
+                });
               }}
               className="rounded-md h-9 w-9 p-0 hover:bg-blue-500 hover:text-white transition-all duration-300 text-blue-500"
               title="Test College Exit Alert"
@@ -959,58 +968,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
           </div>
         </div>
       </div>
-
-      {showArrivalAlert && (
-        <div className="absolute inset-0 bg-black/80 z-[1001] flex items-center justify-center p-4">
-          <Card className="w-full max-w-[90vw] sm:max-w-[400px] p-6 text-center shadow-2xl border bg-card rounded-xl relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2 h-8 w-8 rounded-full hover:bg-muted"
-              onClick={() => setShowArrivalAlert(false)}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-            <CardHeader className="p-0 space-y-3 mb-4">
-              <div className="w-14 h-14 rounded-full bg-primary/10 mx-auto flex items-center justify-center border">
-                {busData?.status === "finished" ? (
-                  <School className="w-7 h-7 text-primary" />
-                ) : (
-                  <UserIcon className="w-7 h-7 text-primary" />
-                )}
-              </div>
-              <CardTitle className="text-xl font-bold text-card-foreground leading-tight">
-                {busData?.status === "finished"
-                  ? "Bus Arrived at College!"
-                  : "Bus Arrived at Your Stop!"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <p className="text-sm text-muted-foreground mb-6">
-                {busData?.status === "finished"
-                  ? `Bus ${busId} has reached its final destination.`
-                  : `Bus ${busId} has reached your location. Next stop: College.`}
-              </p>
-              <Button
-                onClick={() => {
-                  if (busData?.status === "finished") {
-                    handleRestartJourney();
-                  } else {
-                    setShowArrivalAlert(false);
-                  }
-                }}
-                className="w-full h-10 text-sm font-medium rounded-lg"
-                size="default"
-              >
-                {busData?.status === "finished"
-                  ? "Start New Journey"
-                  : "Awesome!"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {error && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-md mx-6">
@@ -1080,19 +1037,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
             </CardContent>
           </Card>
         </div>
-      )}
-
-      {/* Enhanced Alert System */}
-      {!showArrivalAlert && (
-        <AlertSystem
-          busId={busId}
-          fiveMinuteAlert={showFiveMinuteAlert}
-          onFiveMinuteAlertClose={() => setShowFiveMinuteAlert(false)}
-          collegeExitAlert={showCollegeExitAlert}
-          onCollegeExitAlertClose={() => setShowCollegeExitAlert(false)}
-          eta={eta || 5}
-          journeyStage={journeyStage}
-        />
       )}
     </div>
   );
