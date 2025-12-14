@@ -1037,7 +1037,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
       {(!userLocation || !busData) && !error && (
         <div className="absolute inset-0 bg-background/95 backdrop-blur-sm flex items-center justify-center z-[2000] p-2 sm:p-4">
-          <Card className="bg-background/50 backdrop-blur-md border border-white/20 shadow-2xl max-w-xs sm:max-w-sm w-full mx-2 sm:mx-4">
+          <Card className="bg-background/50 backdrop-blur-md border-2 border-primary/30 shadow-2xl max-w-xs sm:max-w-sm w-full mx-2 sm:mx-4">
             <CardContent className="p-4 sm:p-6 md:p-8 text-center">
               <div className="p-3 sm:p-4 bg-primary/10 rounded-xl sm:rounded-2xl w-fit mx-auto mb-4 sm:mb-6">
                 <Bus className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-pulse" />
@@ -1056,7 +1056,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/30 dark:bg-zinc-900 dark:border dark:border-white/10 rounded-lg sm:rounded-xl"
+                    className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 dark:bg-zinc-800/80 border border-border/50 dark:border-white/20 rounded-lg sm:rounded-xl"
                   >
                     <span className="text-xs sm:text-sm font-medium">
                       {item.label}
@@ -1087,7 +1087,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
         </div>
       )}
 
-      {/* Enhanced Alert System */}
       {/* Enhanced Alert System */}
       {!showArrivalAlert && (
         <AlertSystem
