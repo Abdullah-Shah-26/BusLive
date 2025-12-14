@@ -178,7 +178,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
               speed: currentSpeed,
             };
           });
-        }, 2500);
+        }, 3000);
       }
     },
     [journeyStage]
@@ -600,14 +600,8 @@ export default function TrackerPage({ busId }: { busId: string }) {
                 return;
               }
 
-              if (busData.status === "finished") {
-                toast({
-                  title: "Journey Complete",
-                  description: "Bus has arrived at the destination.",
-                });
-                return;
-              }
-
+              console.log("AI Traffic Analysis clicked!");
+              console.log("Bus Data:", busData);
               setIsAnalyzing(true);
 
               try {
@@ -629,7 +623,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
                 setTimeout(() => {
                   setAiInsight(null);
-                }, 3000);
+                }, 10000);
               } catch (e: any) {
                 console.error("AI Analysis Error:", e);
 
@@ -671,7 +665,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
             size="icon"
             className="w-12 h-12 rounded-full shadow-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             title="Ask AI about Traffic"
-            disabled={isAnalyzing || busData?.status === "finished"}
+            disabled={isAnalyzing}
           >
             {isAnalyzing ? (
               <Loader2 className="w-6 h-6 animate-spin" />
@@ -785,6 +779,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
         <div className="absolute bottom-24 left-2 right-2 sm:bottom-20 md:bottom-auto md:top-24 md:left-auto md:right-4 z-[1000] md:min-w-[450px] md:max-w-[500px] animate-in slide-in-from-bottom-5 fade-in duration-300">
           <Card className="bg-white/85 dark:bg-zinc-900/85 backdrop-blur-md border border-white/50 dark:border-zinc-700/50 shadow-xl overflow-hidden rounded-xl">
             <div className="p-3">
+              {/* Header */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-indigo-500/20 rounded-lg">
@@ -802,10 +797,12 @@ export default function TrackerPage({ busId }: { busId: string }) {
                 </button>
               </div>
 
+              {/* Analysis text */}
               <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed mb-3">
                 {aiInsight.analysis}
               </p>
 
+              {/* Stats row */}
               <div className="flex gap-2">
                 <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg">
                   <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
