@@ -1,12 +1,12 @@
 # BusLive
 
-Real-time bus tracking system for college transportation with AI-powered traffic insights.
+Real-time bus tracking system with AI-powered traffic insights & live location updates.
 
 **[Live Demo](https://bus-live.vercel.app)**
 
 ## Problem Statement
 
-Public transport in India lacks real-time visibility, causing unpredictable wait times and poor passenger experience. BusLive solves this with live GPS tracking, AI-powered traffic analysis, and smart notifications.
+Public transport lacks real-time visibility, causing unpredictable wait times & poor passenger experience. BusLive provides GPS tracking with ESP32/ESP8266 hardware, live locations, ETAs, capacity indicators, & smart notifications. Demo showcases college campus transportation.
 
 ## Features
 
@@ -15,14 +15,14 @@ Public transport in India lacks real-time visibility, causing unpredictable wait
 - **Favorite Routes** - Save frequently used routes with localStorage
 - **Capacity Indicators** - Color-coded occupancy visualization
 - **Share Location** - Share live tracking via Web Share API
-- **AI Traffic Analysis** - Gemini AI-powered insights and delay predictions
+- **AI Traffic Analysis** - Gemini AI-powered insights & delay predictions
 - **Smart ETA** - Dynamic arrival time predictions
 - **Route Visualization** - Complete journey path display
 - **Smart Alerts** - Notifications when bus is approaching
 - **Loading States** - Skeleton loaders for smooth UX
-- **Authentication** - Google Sign-In and Email/Password
+- **Authentication** - Google Sign-In & Email/Password
 - **Dark Mode** - Theme switching with persistence
-- **Responsive Design** - Works on mobile and desktop
+- **Responsive Design** - Works on mobile & desktop
 
 ## Tech Stack
 
@@ -86,11 +86,15 @@ src/
 
 ## Inspiration
 
-This project was inspired by Smart India Hackathon 2025 Problem Statement #1656, addressing real-world challenges in public transport tracking and management.
+Inspired by Smart India Hackathon 2025 PS #25013 (Government of Punjab) - Real-Time Public Transport Tracking for Small Cities. Implements low-cost GPS tracking with IoT hardware & mobile-first design for scalable bus tracking solutions.
+
+## Contributing
+
+We welcome contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ## Credits
 
-Built with inspiration from the open-source community. Special thanks to SaiGanesh & team for the initial concept.
+Special thanks to Sai Ganesh Rajeti for the foundational architecture & design patterns that helped shape this project.
 
 ## License
 
