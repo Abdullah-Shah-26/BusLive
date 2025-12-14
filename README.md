@@ -2,6 +2,8 @@
 
 Real-time bus tracking system for college transportation with AI-powered traffic insights.
 
+**[Live Demo](https://bus-live.vercel.app)**
+
 ## Problem Statement
 
 Public transport in India lacks real-time visibility, causing unpredictable wait times and poor passenger experience. BusLive solves this with live GPS tracking, AI-powered traffic analysis, and smart notifications.
