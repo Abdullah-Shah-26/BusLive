@@ -178,7 +178,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
               speed: currentSpeed,
             };
           });
-        }, 3000);
+        }, 2500);
       }
     },
     [journeyStage]
@@ -629,7 +629,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
                 setTimeout(() => {
                   setAiInsight(null);
-                }, 10000);
+                }, 3000);
               } catch (e: any) {
                 console.error("AI Analysis Error:", e);
 
