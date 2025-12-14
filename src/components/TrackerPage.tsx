@@ -573,7 +573,8 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
               toast({
                 title: "🔍 Analyzing Traffic...",
-                description: "Asking Gemini AI for insights...",
+                description:
+                  "Asking AI for insights (Gemini → Groq fallback)...",
               });
 
               try {
@@ -633,18 +634,35 @@ export default function TrackerPage({ busId }: { busId: string }) {
                 console.error("AI Analysis Error:", e);
 
                 let errorMessage = "Could not fetch AI insights.";
+                let errorTitle = " Analysis Failed";
+
                 if (e.message?.includes("API key")) {
                   errorMessage =
                     "Gemini API key is missing. Please configure GEMINI_API_KEY in your .env file.";
+                } else if (
+                  e.message?.includes("429") ||
+                  e.message?.includes("quota") ||
+                  e.message?.includes("rate limit")
+                ) {
+                  errorTitle = " Rate Limit Reached";
+                  errorMessage =
+                    "Gemini API rate limit exceeded. Please try again later or upgrade your API quota.";
+                } else if (
+                  e.message?.includes("403") ||
+                  e.message?.includes("forbidden")
+                ) {
+                  errorTitle = " Access Denied";
+                  errorMessage =
+                    "API access denied. Please check your Gemini API key permissions.";
                 } else if (e.message) {
                   errorMessage = e.message;
                 }
 
                 toast({
                   variant: "destructive",
-                  title: " Analysis Failed",
+                  title: errorTitle,
                   description: errorMessage,
-                  duration: 5000,
+                  duration: 6000,
                 });
               } finally {
                 setIsAnalyzing(false);
@@ -1037,7 +1055,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
       {(!userLocation || !busData) && !error && (
         <div className="absolute inset-0 bg-background/95 backdrop-blur-sm flex items-center justify-center z-[2000] p-2 sm:p-4">
-          <Card className="bg-background/50 backdrop-blur-md border-2 border-primary/30 shadow-2xl max-w-xs sm:max-w-sm w-full mx-2 sm:mx-4">
+          <Card className="bg-background/50 backdrop-blur-md border-2 border-primary/30 dark:border-white/30 shadow-2xl max-w-xs sm:max-w-sm w-full mx-2 sm:mx-4">
             <CardContent className="p-4 sm:p-6 md:p-8 text-center">
               <div className="p-3 sm:p-4 bg-primary/10 rounded-xl sm:rounded-2xl w-fit mx-auto mb-4 sm:mb-6">
                 <Bus className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-pulse" />
