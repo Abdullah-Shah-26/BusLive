@@ -140,6 +140,14 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
