@@ -768,8 +768,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
                   <span className="text-[9px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Destination
                   </span>
-                  <School size={10} className="text-primary sm:hidden" />
-                  <School size={14} className="text-primary hidden sm:block" />
+                  <School size={14} className="text-primary" />
                 </div>
                 <div className="text-xs sm:text-sm font-bold text-primary">
                   MJ College of Engineering & Technology
@@ -848,25 +847,25 @@ export default function TrackerPage({ busId }: { busId: string }) {
       )}
 
       <div className="absolute top-2 right-2 sm:top-4 sm:right-4 md:top-4 md:right-4 z-[1000] flex gap-2 md:gap-3 items-start">
-        <div className="md:hidden flex gap-0.5 sm:gap-1 items-center backdrop-blur-3xl rounded-md sm:rounded-lg shadow-2xl p-1 sm:p-1.5 border border-white/30 dark:border-white/20 [background:rgba(255,255,255,0.05)] dark:[background:rgba(0,0,0,0.2)]">
+        <div className="md:hidden flex gap-0 items-center backdrop-blur-3xl rounded-md shadow-2xl p-0.5 border border-white/30 dark:border-white/20 [background:rgba(255,255,255,0.05)] dark:[background:rgba(0,0,0,0.2)]">
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-sm sm:rounded-md h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-accent hover:text-accent-foreground"
+            className="rounded-sm h-6 w-6 p-0 hover:bg-accent hover:text-accent-foreground"
             onClick={() => router.push("/bus-selection")}
             title="Change Bus"
           >
-            <Bus size={16} className="text-foreground" />
+            <Bus size={14} className="text-foreground" />
           </Button>
 
-          <Avatar className="w-6 h-6 sm:w-7 sm:h-7 ring-1 ring-border">
+          <Avatar className="w-5 h-5 ring-1 ring-border">
             <AvatarImage src={user?.photoURL || undefined} />
             <AvatarFallback className="bg-primary/10 text-foreground">
-              <UserIcon size={14} />
+              <UserIcon size={12} />
             </AvatarFallback>
           </Avatar>
 
-          <div className="scale-75 sm:scale-100 origin-center">
+          <div className="scale-[0.65] origin-center -mx-1">
             <ThemeToggle />
           </div>
 
@@ -877,11 +876,11 @@ export default function TrackerPage({ busId }: { busId: string }) {
               e.preventDefault();
               setShowFiveMinuteAlert(true);
             }}
-            className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 rounded-sm sm:rounded-md h-7 w-7 sm:h-8 sm:w-8 p-0"
+            className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 rounded-sm h-6 w-6 p-0"
             title="Test 5min Alert"
             type="button"
           >
-            <Clock size={14} />
+            <Clock size={12} />
           </Button>
 
           <Button
@@ -891,20 +890,20 @@ export default function TrackerPage({ busId }: { busId: string }) {
               e.preventDefault();
               setShowCollegeExitAlert(true);
             }}
-            className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-sm sm:rounded-md h-7 w-7 sm:h-8 sm:w-8 p-0"
+            className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-sm h-6 w-6 p-0"
             title="Test College Exit"
             type="button"
           >
-            <School size={14} />
+            <School size={12} />
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="text-foreground hover:bg-destructive/10 hover:text-destructive rounded-sm sm:rounded-md h-7 w-7 sm:h-8 sm:w-8 p-0"
+            className="text-foreground hover:bg-destructive/10 hover:text-destructive rounded-sm h-6 w-6 p-0"
           >
-            <LogOut size={16} />
+            <LogOut size={14} />
           </Button>
         </div>
 

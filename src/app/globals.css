@@ -239,3 +239,19 @@ html {
     min-height: -webkit-fill-available;
   }
 }
+
+/* Safe area utilities for mobile browsers */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Ensure bottom buttons are visible above mobile browser chrome */
+@media (max-width: 640px) {
+  .bottom-safe {
+    bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+}

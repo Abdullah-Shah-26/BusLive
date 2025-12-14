@@ -642,14 +642,14 @@ const MapComponent = ({
     <div className="relative w-full h-full">
       <div className="w-full h-full" id="map" />
 
-      <div className="absolute bottom-6 right-6 z-[1000] flex flex-row gap-2">
+      <div className="absolute bottom-8 sm:bottom-6 right-4 sm:right-6 z-[1000] flex flex-row gap-2 mb-safe">
         {children}
 
         <Button
           onClick={centerOnBus}
           size="icon"
           variant={isTracking ? "default" : "secondary"}
-          className="w-12 h-12 rounded-full shadow-lg backdrop-blur-sm bg-background/80 hover:bg-background/90 transition-all duration-200"
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg backdrop-blur-sm bg-background/80 hover:bg-background/90 transition-all duration-200"
           disabled={!busLocation}
         >
           <Target className={`w-5 h-5 ${isTracking ? "animate-spin" : ""}`} />
@@ -659,7 +659,7 @@ const MapComponent = ({
           onClick={centerOnUser}
           size="icon"
           variant="outline"
-          className="w-12 h-12 rounded-full shadow-lg backdrop-blur-sm bg-background/80 hover:bg-background/90 transition-all duration-200"
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg backdrop-blur-sm bg-background/80 hover:bg-background/90 transition-all duration-200"
           disabled={!userLocation}
         >
           <Locate className="w-5 h-5" />
