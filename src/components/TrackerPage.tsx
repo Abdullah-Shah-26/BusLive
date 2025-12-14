@@ -531,7 +531,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden">
       <MapComponent
         userLocation={userLocation}
         busLocation={busData?.location}
