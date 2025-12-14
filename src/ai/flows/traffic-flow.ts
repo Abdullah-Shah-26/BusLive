@@ -14,7 +14,7 @@ const analyzeTrafficFlow = ai.defineFlow(
     inputSchema: TrafficAnalysisInputSchema,
     outputSchema: TrafficAnalysisOutputSchema,
   },
-  async (input) => {
+  async (input: { location: any; time: any; currentSpeed: any; }) => {
     const prompt = `
       You are a traffic analysis AI assistant for a smart bus tracking app called BusLive.
       You are speaking directly to a **student** who is waiting for the bus or riding it.

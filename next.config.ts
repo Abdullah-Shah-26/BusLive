@@ -5,7 +5,7 @@ if (
   typeof global.localStorage === "undefined" ||
   typeof global.localStorage.getItem !== "function"
 ) {
-  (global as any).localStorage = {
+  (globalThis as any).localStorage = {
     getItem: () => null,
     setItem: () => {},
     removeItem: () => {},
@@ -18,9 +18,6 @@ if (
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   images: {
     remotePatterns: [

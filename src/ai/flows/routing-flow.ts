@@ -30,7 +30,7 @@ const getRouteFlow = ai.defineFlow(
     inputSchema: GetRouteInputSchema,
     outputSchema: GetRouteOutputSchema,
   },
-  async ({ start, end }) => {
+  async ({ start, end }: z.infer<typeof GetRouteInputSchema>) => {
     const cacheKey = getCacheKey(start, end);
     const cached = routeCache.get(cacheKey);
 
