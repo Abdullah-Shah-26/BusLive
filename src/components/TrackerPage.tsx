@@ -301,7 +301,6 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
   useEffect(() => {
     if (arrivalStatus === "user") {
-      toast({ title: `Bus ${busId} has arrived at your location!` });
       setShowArrivalAlert(true);
       setArrivalStatus(null);
 
@@ -312,12 +311,11 @@ export default function TrackerPage({ busId }: { busId: string }) {
         setShowArrivalAlert(false);
       }, 5000);
     } else if (arrivalStatus === "college") {
-      toast({ title: `Bus ${busId} has arrived at the college.` });
       setShowArrivalAlert(true);
       setBusData((prev) => (prev ? { ...prev, status: "finished" } : null));
       setArrivalStatus(null);
     }
-  }, [arrivalStatus, toast, busId]);
+  }, [arrivalStatus, busId]);
 
   useEffect(() => {
     if (route.length > 0 && busData && routeIndexRef.current < route.length) {
