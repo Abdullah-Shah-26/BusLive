@@ -28,7 +28,7 @@ Public transport lacks real-time visibility, causing unpredictable wait times & 
 
 - **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui  
 - **Backend:** Firebase (Auth + Realtime Database)  
-- **APIs:** OpenRouteService (routing), Google Gemini AI (traffic analysis)  
+- **APIs:** OpenRouteService (routing), Google Gemini AI / Groq (Llama) (traffic analysis)  
 - **Maps:** Leaflet.js, React Leaflet 
 - **Optimization:** In-memory route caching (5-minute TTL)
 
