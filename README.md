@@ -94,7 +94,7 @@ We welcome contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to
 
 ## Credits
 
-Special thanks to Sai Ganesh Rajeti for the foundational architecture & design patterns that helped shape this project.
+Special thanks to Sai Ganesh for the foundational architecture & design patterns that helped shape this project.
 
 ## License
 
