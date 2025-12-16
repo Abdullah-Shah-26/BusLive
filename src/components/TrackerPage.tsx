@@ -178,7 +178,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
               speed: currentSpeed,
             };
           });
-        }, 3000);
+        }, 2000);
       }
     },
     [journeyStage]
@@ -271,9 +271,9 @@ export default function TrackerPage({ busId }: { busId: string }) {
 
     if (journeyStage === "toUser" && route.length === 0) {
       const randomLatOffset =
-        (Math.random() * 0.03 + 0.05) * (Math.random() > 0.5 ? 1 : -1);
+        (Math.random() * 0.005 + 0.015) * (Math.random() > 0.5 ? 1 : -1);
       const randomLngOffset =
-        (Math.random() * 0.03 + 0.05) * (Math.random() > 0.5 ? 1 : -1);
+        (Math.random() * 0.005 + 0.015) * (Math.random() > 0.5 ? 1 : -1);
 
       const busStartLocation: Location = {
         lat: userLocation.lat + randomLatOffset,
@@ -304,28 +304,26 @@ export default function TrackerPage({ busId }: { busId: string }) {
       setTimeout(() => {
         const voices = window.speechSynthesis.getVoices();
 
-        const femaleVoice = voices.find(
+        const maleVoice = voices.find(
           (v) =>
-            (v.name.includes("Samantha") ||
-              v.name.includes("Google UK English Female") ||
-              v.name.includes("Microsoft Zira") ||
-              v.name.includes("Karen") ||
-              v.name.includes("Victoria") ||
-              v.name.includes("Fiona") ||
-              (v.name.toLowerCase().includes("female") &&
+            (v.name.includes("Google UK English Male") ||
+              v.name.includes("Microsoft David") ||
+              v.name.includes("Daniel") ||
+              v.name.includes("Alex") ||
+              (v.name.toLowerCase().includes("male") &&
                 v.lang.startsWith("en"))) &&
-            !v.name.toLowerCase().includes("male")
+            !v.name.toLowerCase().includes("female")
         );
 
-        if (!femaleVoice) {
+        if (!maleVoice) {
           console.warn(
-            "No female voice available - notification audio skipped"
+            "No male voice available - notification audio skipped"
           );
           return;
         }
 
         const utterance = new SpeechSynthesisUtterance(message);
-        utterance.voice = femaleVoice;
+        utterance.voice = maleVoice;
         utterance.rate = 0.9;
         utterance.pitch = 1.1;
         utterance.volume = 0.8;
@@ -351,6 +349,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
         routeIndexRef.current = 0;
         setRoute([]);
         setAlertState((prev) => ({ ...prev, fiveMinuteWarning: false }));
+        notificationSentRef.current.fiveMin = false;
         setJourneyStage("toCollege");
       }, 3000);
     } else if (arrivalStatus === "college") {
@@ -359,7 +358,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
       );
 
       toast({
-        title: "🎉 Arrived at College!",
+        title: "Arrived at College!",
         description: `Bus ${busId} has reached the college. Journey complete!`,
       });
       setBusData((prev) => (prev ? { ...prev, status: "finished" } : null));
@@ -410,15 +409,24 @@ export default function TrackerPage({ busId }: { busId: string }) {
         calculatedEta !== null &&
         calculatedEta <= 5 &&
         calculatedEta > 1 &&
-        !alertState.fiveMinuteWarning
+        calculatedEta > 1 &&
+        !alertState.fiveMinuteWarning &&
+        !notificationSentRef.current.fiveMin
       ) {
         setAlertState((prev) => ({ ...prev, fiveMinuteWarning: true }));
+        notificationSentRef.current.fiveMin = true;
 
         if (journeyStage === "toUser") {
           playNotificationSound(
-            `Your bus is about ${Math.round(
+            `Bus ${busId} is reaching your pickup location in about ${Math.round(
               calculatedEta
-            )} minutes away. Please get ready.`
+            )} minutes. Please get ready.`
+          );
+        } else {
+          playNotificationSound(
+            `Bus ${busId} will reach the college in about ${Math.round(
+              calculatedEta
+            )} minutes.`
           );
         }
 
