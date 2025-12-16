@@ -178,7 +178,7 @@ export default function TrackerPage({ busId }: { busId: string }) {
               speed: currentSpeed,
             };
           });
-        }, 2000);
+        }, 1000);
       }
     },
     [journeyStage]
