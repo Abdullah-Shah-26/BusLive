@@ -24,13 +24,46 @@ Public transport lacks real-time visibility, causing unpredictable wait times & 
 - **Dark Mode** - Theme switching with persistence
 - **Responsive Design** - Works on mobile & desktop
 
+## Architecture
+
+```
+                              ┌──────────────────┐
+                              │     Client       │
+                              │  Next.js + React │
+                              │  Leaflet Maps    │
+                              └────────┬─────────┘
+                                       │
+                    ┌──────────────────┼──────────────────┐
+                    │                  │                  │
+                    ▼                  ▼                  ▼
+            ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+            │     Auth     │   │    Routing   │   │      AI      │
+            │   Firebase   │   │  OpenRoute   │   │  Gemini/Groq │
+            └──────────────┘   │   Service    │   │    Genkit    │
+                               └──────────────┘   └──────────────┘
+                                       │
+                                       ▼
+                              ┌──────────────────┐
+                              │     Firebase     │
+                              │   Realtime DB    │◄─────────────┐
+                              └──────────────────┘              │
+                                                                │
+                              ┌──────────────────┐              │
+                              │    IoT Device    │              │
+                              │   ESP32 + GPS    │──────────────┘
+                              │  (5s intervals)  │
+                              └──────────────────┘
+```
+
 ## Tech Stack
 
-- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui  
-- **Backend:** Firebase (Auth + Realtime Database)  
-- **APIs:** OpenRouteService (routing), Google Gemini AI / Groq (Llama) (traffic analysis)  
-- **Maps:** Leaflet.js, React Leaflet 
-- **Optimization:** In-memory route caching (5-minute TTL)
+| Layer    | Technologies                                          |
+| -------- | ----------------------------------------------------- |
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind, shadcn/ui |
+| Maps     | Leaflet.js, React Leaflet, OpenRouteService API       |
+| Backend  | Firebase Auth + Realtime Database                     |
+| AI       | Google Gemini, Groq (Llama), Genkit                   |
+| Hardware | ESP32/ESP8266, NEO-6M GPS, TinyGPS++                  |
 
 ## Quick Start
 
