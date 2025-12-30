@@ -127,7 +127,7 @@ We welcome contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to
 
 ## Acknowledgements
 
-Special thanks to Sai Ganesh for the foundational architecture & design patterns that helped shape this project
+Special thanks to Sai Ganesh for architectural ideas and design patterns that influenced this project.
 
 ## License
 
