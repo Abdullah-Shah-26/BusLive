@@ -125,7 +125,7 @@ Inspired by Smart India Hackathon 2025 PS #25013 (Government of Punjab) - Real-T
 
 We welcome contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
-## Credits
+## Acknowledgements
 
 Special thanks to Sai Ganesh for the foundational architecture & design patterns that helped shape this project
 
