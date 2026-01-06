@@ -3,32 +3,18 @@
 import "leaflet/dist/leaflet.css";
 import "./MapComponent.css";
 import {
-  Icon,
   Map as LeafletMap,
   map as createMap,
   tileLayer,
   marker,
   LatLng,
-  latLngBounds,
   polyline,
   circle,
   divIcon,
 } from "leaflet";
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
-import {
-  MapPin,
-  Users,
-  School,
-  Navigation,
-  Bus,
-  Zap,
-  Clock,
-  Locate,
-  Target,
-} from "lucide-react";
-import { Card } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Locate, Target } from "lucide-react";
 import { Button } from "./ui/button";
 
 declare global {
@@ -149,7 +135,7 @@ const playNotificationSound = () => {
   }
 };
 
-const createModernBusIcon = (theme: string = "light") =>
+const createModernBusIcon = () =>
   new (divIcon as any)({
     html: `
     <div class="relative flex items-center justify-center w-12 h-12">
@@ -272,7 +258,6 @@ const MapComponent = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const L = require("leaflet");
       if (mapRef.current === null) {
         const mapElement = document.getElementById("map");
         if (mapElement && !(mapElement as any)._leaflet_id) {
@@ -389,7 +374,7 @@ const MapComponent = ({
     if (mapRef.current && busLocation) {
       const busIcon = isUserOnBus
         ? createCombinedUserBusIcon()
-        : createModernBusIcon(theme || "light");
+        : createModernBusIcon();
 
       if (!busMarkerRef.current) {
         busMarkerRef.current = marker([busLocation.lat, busLocation.lng], {
