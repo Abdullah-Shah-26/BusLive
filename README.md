@@ -125,6 +125,3 @@ Inspired by Smart India Hackathon 2025 PS #25013 (Government of Punjab) - Real-T
 
 We welcome contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
-## License
-
-MIT
