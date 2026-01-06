@@ -798,10 +798,14 @@ export default function TrackerPage({ busId }: { busId: string }) {
                   </span>
                 </div>
                 <button
+                  type="button"
+                  title="Close"
+                  aria-label="Close AI Traffic Analysis"
                   className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                   onClick={() => setAiInsight(null)}
                 >
                   <X className="w-4 h-4" />
+                  <span className="sr-only">Close</span>
                 </button>
               </div>
 
