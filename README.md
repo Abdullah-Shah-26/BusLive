@@ -130,6 +130,44 @@ sequenceDiagram
 | AI       | Google Gemini, Groq (Llama), Genkit                   |
 | Hardware | ESP32/ESP8266, NEO-6M GPS, TinyGPS++                  |
 
+## Screenshots
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><b>1. Authentication</b></td>
+      <td width="50%" align="center"><b>2. Bus Selection</b></td>
+    </tr>
+    <tr>
+      <td><img src="./public/screenshots/Login-Page.png" alt="Login" width="100%"></td>
+      <td><img src="./public/screenshots/Bus-Selection.png" alt="Selection" width="100%"></td>
+    </tr>
+    <tr>
+      <td width="50%" align="center"><b>3. Real-Time Location Tracking</b></td>
+      <td width="50%" align="center"><b>4. Map View (Dark)</b></td>
+    </tr>
+    <tr>
+      <td><img src="./public/screenshots/Fetching-Real-Time-Location.png" alt="Fetching" width="100%"></td>
+      <td><img src="./public/screenshots/Bus-Location-Preview.png" alt="Map Dark" width="100%"></td>
+    </tr>
+    <tr>
+      <td width="50%" align="center"><b>5. Map View (Light)</b></td>
+      <td width="50%" align="center"><b>6. Mobile Experience</b></td>
+    </tr>
+    <tr>
+      <td><img src="./public/screenshots/Bus-Location-Light-Mode.png" alt="Map Light" width="100%"></td>
+      <td align="center">
+        <table width="100%">
+          <tr>
+            <td align="center"><img src="./public/screenshots/Mobile-View-Dark.png" alt="Mobile Dark" width="100%"></td>
+            <td align="center"><img src="./public/screenshots/Mobile-View-Light.png" alt="Mobile Light" width="100%"></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ## Quick Start
 
 ```bash
