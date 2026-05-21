@@ -2,7 +2,7 @@
 
 Real-time bus tracking system with AI-powered traffic insights & live location updates.
 
-**[Youtube Demo](https://www.youtube.com/watch?v=MXJ_s8GxDIE)**
+**[YouTube Demo](https://www.youtube.com/watch?v=MXJ_s8GxDIE)**
 
 ## Problem Statement
 
